@@ -34,6 +34,7 @@ namespace hpx
         // May be used anywhere in code and returns a reference to the single,
         // global resource partitioner.
         HPX_EXPORT detail::partitioner& get_partitioner();
+        HPX_EXPORT bool is_partitioner_valid();
 
         // resource_partitioner mode
         enum partitioner_mode
@@ -63,9 +64,6 @@ namespace hpx
             static_priority = 4,
             abp_priority_fifo = 5,
             abp_priority_lifo = 6,
-            hierarchy = 7,
-            periodic_priority = 8,
-            throttle = 9
         };
     }
 }

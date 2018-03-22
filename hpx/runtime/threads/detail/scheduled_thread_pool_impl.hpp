@@ -1573,7 +1573,7 @@ namespace hpx { namespace threads { namespace detail
         std::size_t virt_core, std::size_t thread_num,
         std::shared_ptr<compat::barrier> startup, error_code& ec)
     {
-        std::unique_lock<compat::mutex>
+        std::unique_lock<typename Scheduler::pu_mutex_type>
             l(sched_->Scheduler::get_pu_mutex(virt_core));
 
         if (threads_.size() <= virt_core)
@@ -1643,7 +1643,7 @@ namespace hpx { namespace threads { namespace detail
     void scheduled_thread_pool<Scheduler>::remove_processing_unit_internal(
         std::size_t virt_core, error_code& ec)
     {
-        std::unique_lock<compat::mutex>
+        std::unique_lock<typename Scheduler::pu_mutex_type>
             l(sched_->Scheduler::get_pu_mutex(virt_core));
 
         if (threads_.size() <= virt_core || !threads_[virt_core].joinable())
@@ -1670,6 +1670,8 @@ namespace hpx { namespace threads { namespace detail
         compat::thread t;
         std::swap(threads_[virt_core], t);
 
+        l.unlock();
+
         if (threads::get_self_ptr())
         {
             std::size_t thread_num = thread_offset_ + virt_core;
@@ -1690,19 +1692,11 @@ namespace hpx { namespace threads { namespace detail
     {
         // Yield to other HPX threads if lock is not available to avoid
         // deadlocks when multiple HPX threads try to resume or suspend pus.
-        std::unique_lock<compat::mutex>
-            l(sched_->Scheduler::get_pu_mutex(virt_core), std::try_to_lock);
+        std::unique_lock<typename Scheduler::pu_mutex_type>
+            l(sched_->Scheduler::get_pu_mutex(virt_core), std::defer_lock);
         util::yield_while([&l]()
             {
-                if (l.owns_lock())
-                {
-                    return false;
-                }
-                else
-                {
-                    l.try_lock();
-                    return true;
-                }
+                return !l.try_lock();
             }, "scheduled_thread_pool::suspend_processing_unit_internal",
             hpx::threads::pending);
 
@@ -1722,6 +1716,8 @@ namespace hpx { namespace threads { namespace detail
         // Inform the scheduler to suspend the virtual core only if running
         hpx::state expected = state_running;
         state.compare_exchange_strong(expected, state_pre_sleep);
+
+        l.unlock();
 
         HPX_ASSERT(expected == state_running || expected == state_pre_sleep ||
             expected == state_sleeping);
@@ -1795,19 +1791,11 @@ namespace hpx { namespace threads { namespace detail
     {
         // Yield to other HPX threads if lock is not available to avoid
         // deadlocks when multiple HPX threads try to resume or suspend pus.
-        std::unique_lock<compat::mutex>
-            l(sched_->Scheduler::get_pu_mutex(virt_core), std::try_to_lock);
+        std::unique_lock<typename Scheduler::pu_mutex_type>
+            l(sched_->Scheduler::get_pu_mutex(virt_core), std::defer_lock);
         util::yield_while([&l]()
             {
-                if (l.owns_lock())
-                {
-                    return false;
-                }
-                else
-                {
-                    l.try_lock();
-                    return true;
-                }
+                return !l.try_lock();
             }, "scheduled_thread_pool::resume_processing_unit_internal",
             hpx::threads::pending);
 
@@ -1820,6 +1808,8 @@ namespace hpx { namespace threads { namespace detail
                 "this thread pool");
             return;
         }
+
+        l.unlock();
 
         std::atomic<hpx::state>& state =
             sched_->Scheduler::get_state(virt_core);

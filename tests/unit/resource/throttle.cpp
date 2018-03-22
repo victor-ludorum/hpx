@@ -9,6 +9,7 @@
 #include <hpx/include/async.hpp>
 #include <hpx/include/resource_partitioner.hpp>
 #include <hpx/include/threads.hpp>
+#include <hpx/lcos/when_all.hpp>
 #include <hpx/runtime/threads/policies/scheduler_mode.hpp>
 #include <hpx/runtime/threads/policies/schedulers.hpp>
 #include <hpx/util/lightweight_test.hpp>
@@ -230,9 +231,7 @@ void test_scheduler(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
     // NOTE: Static schedulers do not support suspending the own worker thread
-    // because they do not steal work. Periodic priority scheduler not tested
-    // because it does not take into account scheduler states when scheduling
-    // work.
+    // because they do not steal work.
 
     test_scheduler<hpx::threads::policies::local_queue_scheduler<>>(argc, argv);
     test_scheduler<hpx::threads::policies::local_priority_queue_scheduler<>>(argc,

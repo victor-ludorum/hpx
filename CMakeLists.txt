@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2017 Hartmut Kaiser
+# Copyright (c) 2007-2018 Hartmut Kaiser
 # Copyright (c) 2011-2014 Thomas Heller
 # Copyright (c) 2007-2008 Chirag Dekate
 # Copyright (c)      2011 Bryce Lelbach
@@ -14,17 +14,6 @@
 
 # We require at least CMake V3.3.2
 cmake_minimum_required(VERSION 3.3.2 FATAL_ERROR)
-
-# explicitly set certain policies
-cmake_policy(VERSION 3.3.2)
-macro(hpx_set_cmake_policy policy value)
-  if(POLICY ${policy})
-    cmake_policy(SET ${policy} ${value})
-  endif()
-endmacro()
-hpx_set_cmake_policy(CMP0042 NEW)
-hpx_set_cmake_policy(CMP0054 OLD)
-hpx_set_cmake_policy(CMP0060 NEW)
 
 # Overrides must go before the project() statement, otherwise they are ignored.
 
@@ -60,25 +49,33 @@ set(HPX_LIBRARY_VERSION "${HPX_VERSION}")
 set(HPX_SOVERSION ${HPX_MAJOR_VERSION})
 set(HPX_PACKAGE_NAME HPX)
 
-if(MSVC)
-  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-endif()
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
 # CMake configuration
 ################################################################################
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
 
-# We safe the passed compiler flag to a special variable. This is needed for our
-# build system unit tests. Some flags might influence the created symbols (
-# _GLIBCXX_DEBUG i look at you)
+include(HPX_Utils)
+
+# explicitly set certain policies
+cmake_policy(VERSION 3.3.2)
+hpx_set_cmake_policy(CMP0042 NEW)
+if(${CMAKE_VERSION} VERSION_LESS "3.11.0")
+  # the old behavior not supported for newer cmake versions anymore
+  hpx_set_cmake_policy(CMP0054 OLD)
+endif()
+hpx_set_cmake_policy(CMP0060 NEW)
+
+# We save the passed compiler flag to a special variable. This is needed for our
+# build system unit tests. Some flags might influence the created symbols
+# (_GLIBCXX_DEBUG i look at you)
 set(CMAKE_CXX_FLAGS_SAFE ${CMAKE_CXX_FLAGS})
 
 include(CheckCXXCompilerFlag)
 include(CMakeDependentOption)
 
 # include additional macro definitions
-include(HPX_Utils)
 include(HPX_ExportTargets)
 include(HPX_Libraries)
 include(HPX_LibraryDir)
@@ -608,7 +605,7 @@ hpx_option(HPX_WITH_ITTNOTIFY BOOL
 # Scheduler configuration
 ################################################################################
 hpx_option(HPX_WITH_THREAD_SCHEDULERS STRING
-  "Which thread schedulers are build. Options are: all, abp-priority, local, static-priority, static, hierarchy, and periodic-priority. For multiple enabled schedulers, separate with a semicolon (default: all)"
+  "Which thread schedulers are built. Options are: all, abp-priority, local, static-priority, static. For multiple enabled schedulers, separate with a semicolon (default: all)"
   "all"
   CATEGORY "Thread Manager" ADVANCED)
 
@@ -633,21 +630,6 @@ foreach(_scheduler ${HPX_WITH_THREAD_SCHEDULERS_UC})
   if(_scheduler STREQUAL "STATIC" OR _all)
     hpx_add_config_define(HPX_HAVE_STATIC_SCHEDULER)
     set(HPX_WITH_STATIC_SCHEDULER ON CACHE INTERNAL "")
-  endif()
-  if(_scheduler STREQUAL "HIERARCHY" OR _all)
-    hpx_add_config_define(HPX_HAVE_HIERARCHY_SCHEDULER)
-    set(HPX_WITH_HIERARCHY_SCHEDULER ON CACHE INTERNAL "")
-  endif()
-  if(_scheduler STREQUAL "PERIODIC-PRIORITY" OR _all)
-    hpx_add_config_define(HPX_HAVE_PERIODIC_PRIORITY_SCHEDULER)
-    set(HPX_WITH_PERIODIC_PRIORITY_SCHEDULER ON CACHE INTERNAL "")
-  endif()
-  # The throttling scheduler has not been tested neither on Windows nor on Mac
-  if(NOT WIN32 AND NOT APPLE)
-    if(_scheduler STREQUAL "THROTTLLING" OR _all)
-      hpx_add_config_define(HPX_HAVE_THROTTLING_SCHEDULER)
-      set(HPX_WITH_THROTTLING_SCHEDULER ON CACHE INTERNAL "")
-    endif()
   endif()
   unset(_all)
 endforeach()
@@ -916,6 +898,14 @@ hpx_option(HPX_WITH_QUEUE_COMPATIBILITY BOOL
     OFF ADVANCED)
 if(HPX_WITH_QUEUE_COMPATIBILITY)
   hpx_add_config_define(HPX_HAVE_QUEUE_COMPATIBILITY)
+endif()
+
+# HPX_WITH_SCOPED_UNLOCK_COMPATIBILITY: introduced in V1.1.0
+hpx_option(HPX_WITH_SCOPED_UNLOCK_COMPATIBILITY BOOL
+    "Enable backwards compatibility for scoped_unlock utility (default: OFF)"
+    OFF ADVANCED)
+if(HPX_WITH_SCOPED_UNLOCK_COMPATIBILITY)
+  hpx_add_config_define(HPX_HAVE_SCOPED_UNLOCK_COMPATIBILITY)
 endif()
 
 # BADBAD: This enables an overload of swap which is necessary to work around the
