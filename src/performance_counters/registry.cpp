@@ -35,6 +35,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <mutex>
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace hpx { namespace performance_counters
@@ -54,6 +55,104 @@ namespace hpx { namespace performance_counters
                 it = countertypes_.find("/" + p.objectname_);
         }
         return it;
+    }
+    
+    registry& registry::instance()
+    {
+        hpx::util::static_<registry, tag> registry;
+        return registry.get();
+    }
+    
+    void registry::register_action(
+    std::string const& name,
+    get_histogram_creator_type histogram_counter_creator)
+    {
+        if (name.empty())
+        {
+            HPX_THROW_EXCEPTION(bad_parameter,
+                "registry::register_action",
+                "Cannot register an action with an empty name");
+        }
+
+        std::lock_guard<mutex_type> l(mtx_);
+
+        auto it = map_.find(name);
+        if (it == map_.end())
+        {
+            counter_functions data =
+            {
+                histogram_counter_creator,
+                0, 0, 1
+            };
+
+            map_.emplace(name, std::move(data));
+        }
+        else
+        {
+            (*it).second.histogram_counter_creator =
+                histogram_counter_creator;
+
+            if ((*it).second.min_boundary != (*it).second.max_boundary)
+            {
+                // instantiate actual histogram collection
+                registry::get_histogram_values_type result;
+                histogram_counter_creator(
+                    (*it).second.min_boundary, (*it).second.max_boundary,
+                    (*it).second.num_buckets, result);
+            }
+        }
+    }
+    
+    void registry::register_action(std::string const& name)
+    {
+        if (name.empty())
+        {
+            HPX_THROW_EXCEPTION(bad_parameter,
+                "registry::register_action",
+                "Cannot register an action with an empty name");
+        }
+
+        std::lock_guard<mutex_type> l(mtx_);
+
+        auto it = map_.find(name);
+        if (it == map_.end())
+        {
+            map_.emplace(name, counter_functions());
+        }
+    }
+    
+    registry::get_histogram_values_type
+        registry::get_histogram_counter(
+            std::string const& name, std::int64_t min_boundary,
+            std::int64_t max_boundary, naming::gid_type& gid,
+            std::int64_t num_buckets)
+    {
+        std::unique_lock<mutex_type> l(mtx_);
+
+        map_type::iterator it = map_.find(name);
+        if (it == map_.end())
+        {
+            l.unlock();
+            HPX_THROW_EXCEPTION(bad_parameter,
+                "registry::"
+                    "get_histogram_counter",
+                "unknown action type");
+            return &registry::empty_histogram;
+        }
+
+        if ((*it).second.histogram_counter_creator.empty())
+        {
+            // no parcel of this type has been sent yet
+            (*it).second.min_boundary = min_boundary;
+            (*it).second.max_boundary = max_boundary;
+            (*it).second.num_buckets = num_buckets;
+            return registry::get_histogram_values_type();
+        }
+
+        registry::get_histogram_values_type result;
+        (*it).second.histogram_counter_creator(
+            min_boundary, max_boundary, num_buckets, result);
+        return result;
     }
 
     registry::counter_type_map_type::const_iterator
