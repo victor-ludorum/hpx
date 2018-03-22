@@ -556,6 +556,24 @@ namespace hpx
         performance_counters::install_counter_types(
             statistic_counter_types,
             sizeof(statistic_counter_types)/sizeof(statistic_counter_types[0]));
+        
+         performance_counters::generic_counter_type_data histogram_counter_types[] =
+        {
+            // histogram counter
+            
+            // histogram_performance_counter@action-name,min,max,buckets
+            { "histogram_performance_counter", counter_histogram,
+              "returns the histogram for the times between parcels for "
+              "the action which is given by the counter parameter",
+              HPX_PERFORMANCE_COUNTER_V1,
+              &performance_counters::get_histogram_counter_creator,
+              &performance_counters::counter_discoverer,
+              "ns/0.1%"
+            }
+        };
+        performance_counters::install_counter_types(
+            histogram_counter_types,
+            sizeof(histogram_counter_types)/sizeof(histogram_counter_types[0]));
 
         performance_counters::generic_counter_type_data arithmetic_counter_types[] =
         {
