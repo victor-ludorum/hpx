@@ -827,6 +827,20 @@ namespace hpx { namespace performance_counters
                     gid, ec);
             return gid;
         }
+        
+        // \brief Create a new aggregating histogram performance counter instance
+        //        based on given base counter name and given base time interval
+        //        (milliseconds).
+        naming::gid_type get_histogram_counter(
+            std::string const& name, std::int64_t min_boundary,
+            std::int64_t max_boundary, std::int64_t num_buckets)
+        {
+            naming::gid_type gid;
+            get_runtime().get_counter_registry().
+                get_histogram_counter(name, min_boundary,
+                    max_boundary, gid, num_buckets);
+            return gid;
+        }
 
         ///////////////////////////////////////////////////////////////////////
         counter_status add_counter(naming::id_type const& id,

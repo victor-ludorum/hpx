@@ -41,6 +41,39 @@ namespace hpx { namespace performance_counters
 
     public:
         registry() {}
+        
+        typedef util::function_nonser<std::vector<std::int64_t>(bool)>
+            get_histogram_values_type;
+        typedef util::function_nonser<
+                void(std::int64_t, std::int64_t, std::int64_t,
+                    get_histogram_values_type&)
+            > get_histogram_creator_type;
+        
+        typedef std::unordered_map<
+                std::string, counter_functions, hpx::util::jenkins_hash
+            > map_type;
+    
+        static registry& instance();
+        
+        void register_action(std::string const& name,
+            get_histogram_creator_type
+             histogram_counter_creator);
+        
+        struct counter_functions
+        {
+            get_histogram_creator_type histogram_counter_creator;
+            std::int64_t min_boundary, max_boundary, num_buckets;
+        };
+        /// \brief Create a new histogram performance counter instance
+        get_histogram_creator_type get_histogram_counter(
+            std::string const& name, std::int64_t min_boundary,
+            std::int64_t max_boundary, naming::gid_type& id, std::int64_t num_buckets);
+        
+        static std::vector<std::int64_t> empty_histogram(bool)
+        {
+            std::vector<std::int64_t> result = { 0, 0, 1, 0 };
+            return result;
+        }
 
         /// \brief Add a new performance counter type to the (local) registry
         counter_status add_counter_type(counter_info const& info,
@@ -165,6 +198,15 @@ namespace hpx { namespace performance_counters
 
     private:
         counter_type_map_type countertypes_;
+        
+        struct tag {};
+
+        friend struct hpx::util::static_<
+                registry, tag
+            >;
+
+        mutable mutex_type mtx_;
+        map_type map_;
     };
 }}
 
