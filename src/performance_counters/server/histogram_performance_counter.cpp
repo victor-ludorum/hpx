@@ -14,6 +14,7 @@
 #include <hpx/util/unlock_guard.hpp>
 #include <hpx/performance_counters/counters.hpp>
 #include <hpx/performance_counters/counter_creators.hpp>
+#include <hpx/performance_counters/counters_fwd.hpp>
 #include <hpx/performance_counters/stubs/performance_counter.hpp>
 #include <hpx/performance_counters/server/histogram_performance_counter.hpp>
 
