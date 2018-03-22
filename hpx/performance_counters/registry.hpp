@@ -55,7 +55,8 @@ namespace hpx { namespace performance_counters
     
         static registry& instance();
         
-        void register_action(get_histogram_creator_type
+        void register_action(std::string const& name,
+            get_histogram_creator_type
              histogram_counter_creator);
         
         struct counter_functions
