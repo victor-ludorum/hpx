@@ -63,11 +63,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 namespace hpx { namespace performance_counters { namespace server
 {
-    ///////////////////////////////////////////////////////////////////////////
-    namespace detail
-    {
-   
-    }
     
      histogram_performance_counter::histogram_performance_counter(
      counter_info const& info, std::string const& base_counter_name,
