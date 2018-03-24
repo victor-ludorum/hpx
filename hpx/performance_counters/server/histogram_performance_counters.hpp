@@ -73,10 +73,6 @@ namespace hpx { namespace performance_counters { namespace server
             std::int64_t max_boundary, naming::gid_type& gid,
             std::int64_t num_buckets);
 
-        /// Overloads from the base_counter base class.
-        hpx::performance_counters::counter_value
-            get_counter_value(bool reset = false);
-
         bool start();
 
         bool stop();
