@@ -30,6 +30,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 namespace hpx { namespace performance_counters { namespace server
 {
+     namespace detail
+    {
+        struct counter_type_from_histogram_base
+        {
+            virtual ~counter_type_from_histogram_base() {}
+
+            virtual bool need_reset() const = 0;
+            virtual double get_value() = 0;
+            virtual void add_value(double value) = 0;
+        };
+    }
+    
     ///////////////////////////////////////////////////////////////////////////
     // This counter exposes the histogram for counters processed during the
     // given base time interval. The counter relies on querying a steadily
@@ -80,8 +92,25 @@ namespace hpx { namespace performance_counters { namespace server
             base_performance_counter::finalize();
             base_type::finalize();
         }
+        
+    protected:
+        bool evaluate_base_counter(counter_value& value);
+        bool evaluate();
+        bool ensure_base_counter();
 
     private:
+        typedef lcos::local::spinlock mutex_type;
+        mutable mutex_type mtx_;
+
+        hpx::util::interval_timer timer_; ///< base time interval in milliseconds
+        std::string base_counter_name_;   ///< name of base counter to be queried
+        naming::id_type base_counter_id_;
+
+        boost::scoped_ptr<detail::counter_type_from_histogram_base> value_;
+        counter_value prev_value_;
+        bool has_prev_value_;
+        
+        bool reset_base_counter_;
         
         typedef boost::accumulators::accumulator_set<
                 double,     // collects percentiles
@@ -95,7 +124,7 @@ namespace hpx { namespace performance_counters { namespace server
         
         // base counters to be queried
         performance_counter_set counters_;
-        mutable mutex_type mtx_;
+        
     };
 }}}
 
