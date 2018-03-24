@@ -9,6 +9,7 @@
 #include <hpx/performance_counters/registry.hpp>
 #include <hpx/performance_counters/server/arithmetics_counter.hpp>
 #include <hpx/performance_counters/server/arithmetics_counter_extended.hpp>
+#include <hpx/performance_counters/server/histogram_performance_counter.hpp>
 #include <hpx/performance_counters/server/elapsed_time_counter.hpp>
 #include <hpx/performance_counters/server/raw_counter.hpp>
 #include <hpx/performance_counters/server/raw_values_counter.hpp>
