@@ -72,6 +72,11 @@ namespace hpx { namespace performance_counters { namespace server
             std::string const& name, std::int64_t min_boundary,
             std::int64_t max_boundary, naming::gid_type& gid,
             std::int64_t num_buckets);
+        
+            histogram_performance_counter(counter_info const& info,
+            std::string const& base_counter_name,
+            std::int64_t min_boundary, std::int64_t max_boundary,
+            std::int64_t num_buckets, bool reset_base_counter);
 
         bool start();
 
