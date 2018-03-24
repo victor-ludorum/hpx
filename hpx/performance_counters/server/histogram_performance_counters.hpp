@@ -30,17 +30,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 namespace hpx { namespace performance_counters { namespace server
 {
-     namespace detail
-    {
-        struct counter_type_from_histogram_base
-        {
-            virtual ~counter_type_from_histogram_base() {}
-
-            virtual bool need_reset() const = 0;
-            virtual double get_value() = 0;
-            virtual void add_value(double value) = 0;
-        };
-    }
     
     ///////////////////////////////////////////////////////////////////////////
     // This counter exposes the histogram for counters processed during the
